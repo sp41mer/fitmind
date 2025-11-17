@@ -1,21 +1,27 @@
 /**
  * Image Service
- * Generates AI images for routines using Replicate API
+ * Generates AI images for routines using Newell AI
  */
 
-const REPLICATE_API_TOKEN = process.env.EXPO_PUBLIC_REPLICATE_API_TOKEN || '';
-const REPLICATE_API_URL = 'https://api.replicate.com/v1/predictions';
+const NEWELL_API_URL = process.env.EXPO_PUBLIC_NEWELL_API_URL || 'https://newell.fastshot.ai';
+const PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID || '';
 
-interface ReplicatePrediction {
-  id: string;
-  status: 'starting' | 'processing' | 'succeeded' | 'failed' | 'canceled';
-  output?: string[] | string | null;
-  error?: string;
+interface NewellImageRequest {
+  project_id: string;
+  prompt: string;
+  model?: string;
+  width?: number;
+  height?: number;
+  num_outputs?: number;
+}
+
+interface NewellImageResponse {
+  images: string[]; // Array of base64 or URL strings
 }
 
 /**
  * Generate a vibrant, energetic AI image for a workout routine
- * Uses the routine name to create abstract, motivational artwork
+ * Uses the routine name to create abstract, motivational artwork using Newell AI
  */
 export async function generateRoutineImage(routineName: string): Promise<string> {
   try {
@@ -26,85 +32,46 @@ Dynamic flowing energy, motion lines, powerful geometric shapes.
 Modern minimalist style. High energy. Motivational. No text or words.
 Professional fitness app aesthetic. 4K quality.`;
 
-    console.log('[ImageService] Generating image for routine:', routineName);
+    console.log('[ImageService] Generating image with Newell AI for routine:', routineName);
 
-    // Create prediction using flux-schnell (fast model)
-    const createResponse = await fetch(REPLICATE_API_URL, {
+    const requestBody: NewellImageRequest = {
+      project_id: PROJECT_ID,
+      prompt: enhancedPrompt,
+      width: 1024,
+      height: 576, // 16:9 aspect ratio
+      num_outputs: 1,
+    };
+
+    const response = await fetch(`${NEWELL_API_URL}/v1/generate/image`, {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        version: 'a45f82a1382bed5c7aeb861dac7c7d191b0fdf74d8d57c4a0e6ed7d4d0bf7d24',
-        input: {
-          prompt: enhancedPrompt,
-          num_outputs: 1,
-          aspect_ratio: '16:9',
-          output_format: 'jpg',
-          output_quality: 90,
-        },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
-    if (!createResponse.ok) {
-      const errorText = await createResponse.text();
-      console.error('[ImageService] Failed to create prediction:', errorText);
-      throw new Error(`Failed to generate image: ${createResponse.status}`);
-    }
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[ImageService] Newell AI request failed:', errorText);
 
-    const prediction: ReplicatePrediction = await createResponse.json();
-    console.log('[ImageService] Initial prediction:', prediction.status);
-
-    // If the prediction didn't complete immediately, poll for results
-    let finalPrediction = prediction;
-    let attempts = 0;
-    const maxAttempts = 60; // 60 seconds max wait time
-
-    while (
-      finalPrediction.status !== 'succeeded' &&
-      finalPrediction.status !== 'failed' &&
-      finalPrediction.status !== 'canceled' &&
-      attempts < maxAttempts
-    ) {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-
-      const statusResponse = await fetch(
-        `${REPLICATE_API_URL}/${finalPrediction.id}`,
-        {
-          headers: {
-            'Authorization': `Token ${REPLICATE_API_TOKEN}`,
-          },
-        }
-      );
-
-      if (!statusResponse.ok) {
-        throw new Error('Failed to check prediction status');
+      if (response.status === 403) {
+        throw new Error('Project validation failed. Please check your project ID.');
       }
-
-      finalPrediction = await statusResponse.json();
-      attempts++;
-
-      console.log('[ImageService] Prediction status:', finalPrediction.status, `(attempt ${attempts})`);
+      throw new Error(`Failed to generate image: ${response.status}`);
     }
 
-    if (finalPrediction.status === 'succeeded' && finalPrediction.output) {
-      // Extract the image URL from the output
-      const imageUrl = Array.isArray(finalPrediction.output)
-        ? finalPrediction.output[0]
-        : finalPrediction.output;
+    const result: NewellImageResponse = await response.json();
 
-      console.log('[ImageService] Image generated successfully:', imageUrl);
-      return imageUrl;
+    if (!result.images || result.images.length === 0) {
+      throw new Error('No image was generated');
     }
 
-    if (finalPrediction.status === 'failed') {
-      throw new Error(finalPrediction.error || 'Image generation failed');
-    }
+    const imageUrl = result.images[0];
+    console.log('[ImageService] Image generated successfully with Newell AI');
 
-    throw new Error('Image generation timed out or was canceled');
+    return imageUrl;
   } catch (error) {
-    console.error('[ImageService] Error generating routine image:', error);
+    console.error('[ImageService] Error generating routine image with Newell AI:', error);
     throw error;
   }
 }
