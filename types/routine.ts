@@ -21,6 +21,7 @@ export interface Routine {
   progressiveOverloadPercentage: number; // percentage to add to weights (e.g., 2 for 2%)
   createdAt: string;
   notes?: string; // custom notes for the routine
+  imageUrl?: string; // AI-generated cover image for the routine
 }
 
 export interface NewellTextRequest {

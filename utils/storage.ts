@@ -26,7 +26,8 @@ export const loadRoutines = async (): Promise<Routine[]> => {
 export const addRoutine = async (routine: Routine): Promise<void> => {
   try {
     const routines = await loadRoutines();
-    routines.push(routine);
+    // Add new routine at the beginning so it appears first
+    routines.unshift(routine);
     await saveRoutines(routines);
   } catch (error) {
     console.error('Error adding routine:', error);

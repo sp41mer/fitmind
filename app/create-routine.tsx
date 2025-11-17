@@ -42,6 +42,7 @@ export default function CreateRoutineScreen() {
   const [routineAIPrompt, setRoutineAIPrompt] = useState('');
   const [isGeneratingRoutine, setIsGeneratingRoutine] = useState(false);
   const [generatingDayId, setGeneratingDayId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const addDayManually = () => {
     const newDay: DayInput = {
@@ -260,11 +261,24 @@ export default function CreateRoutineScreen() {
       return;
     }
 
+    setIsSaving(true);
+
     try {
+      // Generate AI image for the routine
+      let imageUrl: string | undefined;
+      try {
+        const { generateRoutineImage } = await import('@/services/imageService');
+        imageUrl = await generateRoutineImage(routineName.trim());
+      } catch (imageError) {
+        console.warn('Failed to generate routine image:', imageError);
+        // Continue saving without image if generation fails
+      }
+
       const routine: Routine = {
         id: Date.now().toString(),
         name: routineName.trim(),
         notes: routineNotes.trim() || undefined,
+        imageUrl,
         days: days.map((day, index) => ({
           id: day.id,
           dayNumber: index + 1,
@@ -283,12 +297,14 @@ export default function CreateRoutineScreen() {
       };
 
       await addRoutine(routine);
-      Alert.alert('Success', 'Routine saved successfully!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+
+      // Navigate to the Activity (Workouts) tab
+      router.replace('/(tabs)/workouts');
     } catch (error) {
       console.error('Error saving routine:', error);
       Alert.alert('Error', 'Failed to save routine. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -298,6 +314,19 @@ export default function CreateRoutineScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={100}
     >
+      {/* Loading Overlay */}
+      {isSaving && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color={Colors.accent} />
+            <Text style={styles.loadingTitle}>Creating Your Routine</Text>
+            <Text style={styles.loadingText}>
+              Generating custom AI artwork...
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -305,11 +334,16 @@ export default function CreateRoutineScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Routine</Text>
         <TouchableOpacity
-          style={styles.saveButton}
+          style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
           onPress={handleSave}
           activeOpacity={0.7}
+          disabled={isSaving}
         >
-          <Text style={styles.saveButtonText}>Save</Text>
+          {isSaving ? (
+            <ActivityIndicator color={Colors.textLight} size="small" />
+          ) : (
+            <Text style={styles.saveButtonText}>Save</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -669,6 +703,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
+    minWidth: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
   },
   saveButtonText: {
     fontSize: FontSize.md,
@@ -901,5 +941,36 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     fontWeight: FontWeight.semibold,
     marginLeft: Spacing.sm,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingCard: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xxxl,
+    alignItems: 'center',
+    ...Shadow.large,
+    minWidth: 280,
+  },
+  loadingTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  loadingText: {
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 });

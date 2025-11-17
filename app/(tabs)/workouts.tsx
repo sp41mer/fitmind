@@ -8,6 +8,7 @@ import {
   StatusBar,
   Modal,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '@/constants/theme';
@@ -84,13 +85,21 @@ export default function WorkoutsScreen() {
           onPress={() => handleSelectDay(item)}
           activeOpacity={0.8}
         >
-          <View style={styles.iconContainer}>
-            <Ionicons
-              name={getRoutineIcon(index) as any}
-              size={40}
-              color={Colors.accent}
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.routineImage}
+              resizeMode="cover"
             />
-          </View>
+          ) : (
+            <View style={styles.iconContainer}>
+              <Ionicons
+                name={getRoutineIcon(index) as any}
+                size={40}
+                color={Colors.accent}
+              />
+            </View>
+          )}
           <Text style={styles.routineName} numberOfLines={2}>
             {item.name}
           </Text>
@@ -294,6 +303,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accentLight,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  routineImage: {
+    width: '100%',
+    height: 120,
+    borderRadius: BorderRadius.md,
     marginBottom: Spacing.md,
   },
   routineName: {
