@@ -9,11 +9,13 @@ import {
   Modal,
   Dimensions,
   Image,
+  Animated,
+  Alert,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, Spacing, BorderRadius, FontSize, FontWeight, Shadow } from '@/constants/theme';
 import { Routine } from '@/types/routine';
-import { loadRoutines } from '@/utils/storage';
+import { loadRoutines, deleteRoutine } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -72,6 +74,32 @@ export default function WorkoutsScreen() {
     });
   };
 
+  const handleDeleteRoutine = (routine: Routine) => {
+    Alert.alert(
+      'Delete Routine?',
+      `Are you sure you want to permanently delete '${routine.name}'?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteRoutine(routine.id);
+              await loadRoutinesData();
+            } catch (error) {
+              console.error('Error deleting routine:', error);
+              Alert.alert('Error', 'Failed to delete routine. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderRoutineCard = ({ item, index }: { item: Routine; index: number }) => {
     const totalExercises = item.days.reduce(
       (sum, day) => sum + day.exercises.length,
@@ -83,6 +111,7 @@ export default function WorkoutsScreen() {
         <TouchableOpacity
           style={styles.routineCard}
           onPress={() => handleSelectDay(item)}
+          onLongPress={() => handleDeleteRoutine(item)}
           activeOpacity={0.8}
         >
           {item.imageUrl ? (
@@ -146,7 +175,7 @@ export default function WorkoutsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Start Activity</Text>
+          <Text style={styles.title}>My Routines</Text>
           <TouchableOpacity
             onPress={() => router.push('/create-routine')}
             activeOpacity={0.7}

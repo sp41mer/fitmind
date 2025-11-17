@@ -77,3 +77,14 @@ export const progressRoutineDay = async (routineId: string): Promise<void> => {
     throw error;
   }
 };
+
+export const deleteRoutine = async (routineId: string): Promise<void> => {
+  try {
+    const routines = await loadRoutines();
+    const filteredRoutines = routines.filter(r => r.id !== routineId);
+    await saveRoutines(filteredRoutines);
+  } catch (error) {
+    console.error('Error deleting routine:', error);
+    throw error;
+  }
+};

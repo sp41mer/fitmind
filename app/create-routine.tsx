@@ -298,7 +298,7 @@ export default function CreateRoutineScreen() {
 
       await addRoutine(routine);
 
-      // Navigate to the Activity (Workouts) tab
+      // Navigate to the Routines tab
       router.replace('/(tabs)/workouts');
     } catch (error) {
       console.error('Error saving routine:', error);
