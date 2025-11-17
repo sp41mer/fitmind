@@ -16,7 +16,6 @@ export default function RootLayout() {
       <Stack.Screen name="workout-detail" options={{ headerShown: false }} />
       <Stack.Screen name="exercise-stats" options={{ headerShown: false }} />
       <Stack.Screen name="routine-history" options={{ headerShown: false }} />
-      <Stack.Screen name="daily-activity" options={{ headerShown: false }} />
     </Stack>
   );
 }

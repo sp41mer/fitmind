@@ -88,13 +88,6 @@ export default function HomeScreen() {
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              onPress={() => router.push('/daily-activity')}
-              activeOpacity={0.7}
-              style={styles.headerButton}
-            >
-              <Ionicons name="stats-chart" size={24} color={Colors.accent} />
-            </TouchableOpacity>
-            <TouchableOpacity
               onPress={() => router.push('/create-routine')}
               activeOpacity={0.7}
             >
@@ -208,9 +201,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.md,
     alignItems: 'center',
-  },
-  headerButton: {
-    padding: Spacing.xs,
   },
   greeting: {
     fontSize: FontSize.md,
