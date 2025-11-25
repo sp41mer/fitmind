@@ -13,7 +13,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.sp41mer.fastshotapp"
+      "bundleIdentifier": "com.sp41mer.fitmind"
     },
     "android": {
       "adaptiveIcon": {
